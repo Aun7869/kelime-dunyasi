@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kelime Dünyası</title>
+<style>
+:root{--bg:#fff7ec;--sf:#fff;--tx:#2b2118;--mu:#7a6a5a;--ac:#c2410c;--ok:#15803d;--bd:#ead9c3;--box:box-sizing;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1511;--sf:#2a2019;--tx:#f5eadb;--mu:#b6a590;--ac:#fb923c;--ok:#4ade80;--bd:#4a3a2c}}
+:root[data-theme="dark"]{--bg:#1c1511;--sf:#2a2019;--tx:#f5eadb;--mu:#b6a590;--ac:#fb923c;--ok:#4ade80;--bd:#4a3a2c}
+:root[data-t="bogaz"]{--bg:#0f1e3a;--sf:#17294d;--tx:#e8eefc;--mu:#9db2da;--ac:#fbbf24;--bd:#2c4373}
+:root[data-t="pamukkale"]{--bg:#e8f6f8;--sf:#fff;--tx:#12343b;--mu:#4d7a83;--ac:#0e7490;--bd:#bfe0e6}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif;max-width:480px;margin:auto;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;padding:12px 16px;font-weight:700}
+main{flex:1;overflow:auto;padding:0 16px 12px}
+nav{display:flex;border-top:1px solid var(--bd);background:var(--sf)}
+nav button{flex:1;padding:14px;border:0;background:none;color:var(--mu);font:inherit;font-weight:600}
+nav button.on{color:var(--ac)}
+.row{display:flex;gap:5px;margin:6px 0;justify-content:center;flex-wrap:wrap}
+.c{width:38px;height:38px;border-radius:8px;background:var(--sf);border:1.5px solid var(--bd);display:grid;place-items:center;font-weight:800;color:transparent}
+.c.f{color:var(--tx);background:var(--ac);color:#fff;border-color:var(--ac)}
+.c.f,.lvl{cursor:pointer}
+.lvl{text-align:center;color:var(--mu);font-size:14px}
+#wheel{position:relative;width:260px;height:260px;margin:14px auto;border-radius:50%;background:var(--sf);border:1px solid var(--bd);touch-action:none;user-select:none}
+#wheel svg{position:absolute;inset:0;pointer-events:none}
+.L{position:absolute;width:54px;height:54px;margin:-27px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:24px;background:var(--bg);border:2px solid var(--bd)}
+.L.s{background:var(--ac);color:#fff;border-color:var(--ac)}
+#cur{height:34px;text-align:center;font-size:24px;font-weight:800;letter-spacing:3px}
+.shake{animation:sh .3s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700}
+.btn.o{background:none;color:var(--ac);border:1.5px solid var(--ac)}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+#modal{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:auto;transform:translateY(110%);transition:transform .25s;z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+#modal.show{transform:none}
+#modal .card{margin:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 24px #0004}
+.tag{display:inline-block;background:var(--bd);border-radius:6px;padding:2px 7px;margin:2px;font-size:13px}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.msg{text-align:center;color:var(--mu);font-size:14px;min-height:20px}
+</style></head><body>
+<header><span>Kelime Dünyası</span><span>🪙 <span id="coin">0</span> · 🔥 <span id="streak">1</span></span></header>
+<main id="main"></main>
+<nav><button data-v="play" class="on">Oyna</button><button data-v="book">Defterim</button><button data-v="set">Ayarlar</button></nav>
+<div id="modal"></div>
+<script>
+const U=s=>s.toLocaleUpperCase('tr');
+// [definition, pos, suffix parts [text,role], pictogram]
+const D={
+EL:["Elin bileğinden parmak uçlarına kadar olan bölüm.","isim",0,"✋"],AL:["Kırmızı renk; ayrıca 'almak' fiilinin emri.","sıfat",0,"🔴"],
+ELMA:["Ağaçta yetişen, yuvarlak, sulu bir meyve.","isim",0,"🍎"],ALEM:["Evren, dünya; topluluk.","isim"],MAL:["Para ile değeri ölçülen şey, varlık.","isim"],
+KİTAP:["Ciltli, yazılı veya basılı yapraklar topluluğu.","isim",0,"📖"],TAKİP:["İzleme, arkasından gitme.","isim"],KAT:["Bir yapıda üst üste bölümlerden her biri.","isim"],
+İP:["Bükülerek yapılmış uzun ve ince bağ.","isim",0,"🧵"],TİP:["Tür, çeşit; insan yapısı.","isim"],KAP:["İçine bir şey konulan eşya.","isim"],TAK:["Zafer takı; 'takmak' fiilinin emri.","isim"],
+EVLER:["Ev sözcüğünün çoğulu.","isim",[["Ev","kök: konut"],["-ler","çoğul eki"]]],
+EVLERİ:["Evlerinin; evleri (iyelik/belirtme).","isim",[["Ev","kök: konut"],["-ler","çoğul eki"],["-i","3. kişi iyelik eki"]]],
+VERİ:["Bilgi birimi, data.","isim"],VER:["'Vermek' fiilinin emir kipi.","fiil"],EVİ:["Onun evi.","isim"],LEV:["Bulgaristan'ın para birimi.","isim"],
+GÖZLÜK:["Gözü korumak için takılan camlı araç.","isim",[["Göz","kök: görme organı"],["-lük","araç/yapım eki"]]],
+GÖZ:["Görme organı.","isim",0,"👁️"],GÜL:["Dikenli, güzel kokulu çiçek.","isim",0,"🌹"],GÜZ:["Sonbahar.","isim"],KÖZ:["Yanan odunun kızıl parçası.","isim"],GÖL:["Karalar içinde büyük su birikintisi.","isim",0,"🏞️"],
+SABIR:["Acıya, güçlüğe katlanma erdemi.","isim"],SIR:["Gizli tutulan şey; kalay kaplama.","isim"],BAR:["İçki ve eğlence mekânı.","isim"],BAS:["Kalın sesli erkek sesi; 'basmak' emri.","isim"],SAR:["'Sarmak' fiilinin emir kipi.","fiil"],ARI:["Bal yapan böcek; temiz.","isim",0,"🐝"]};
+const LV=[
+{t:"A1",L:"ALEM",W:["ELMA","ALEM","EL","AL"],B:["MAL"]},
+{t:"A2",L:"KİTAP",W:["KİTAP","TAKİP","KAT","İP","TİP"],B:["KAP","TAK"]},
+{t:"B1",L:"EVLERİ",W:["EVLERİ","EVLER","VERİ"],B:["VER","EVİ","LEV"]},
+{t:"B2",L:"GÖZLÜK",W:["GÖZLÜK","GÖZ","GÜL","GÜZ"],B:["KÖZ","GÖL"]},
+{t:"C1",L:"SABIR",W:["SABIR","SIR","BAR","BAS"],B:["SAR","ARI"]}];
+const LI={en:0,ur:1,ar:2,de:3};
+const G={EL:["hand","ہاتھ","يد","Hand"],AL:["red","سرخ","أحمر","rot"],ELMA:["apple","سیب","تفاحة","Apfel"],ALEM:["world, universe","دنیا","عالم","Welt"],MAL:["goods, property","مال","مال","Besitz"],
+KİTAP:["book","کتاب","كتاب","Buch"],TAKİP:["following, pursuit","تعاقب","متابعة","Verfolgung"],KAT:["floor (storey)","منزل","طابق","Stockwerk"],İP:["rope, string","رسی","حبل","Seil"],TİP:["type, kind","قسم","نوع","Typ"],KAP:["container","برتن","وعاء","Behälter"],TAK:["arch","محراب","قوس","Bogen"],
+EVLER:["houses","گھر","بيوت","Häuser"],EVLERİ:["his/her houses","اس کے گھر","بيوته","seine Häuser"],VERİ:["data","ڈیٹا","بيانات","Daten"],VER:["give!","دو","أعطِ","gib!"],EVİ:["his/her house","اس کا گھر","بيته","sein Haus"],LEV:["lev (currency)","لیو","ليف","Lew"],
+GÖZLÜK:["glasses","عینک","نظارات","Brille"],GÖZ:["eye","آنکھ","عين","Auge"],GÜL:["rose","گلاب","وردة","Rose"],GÜZ:["autumn","خزاں","خريف","Herbst"],KÖZ:["ember","انگارا","جمرة","Glut"],GÖL:["lake","جھیل","بحيرة","See"],
+SABIR:["patience","صبر","صبر","Geduld"],SIR:["secret","راز","سر","Geheimnis"],BAR:["bar","بار","بار","Bar"],BAS:["bass","باس","باس","Bass"],SAR:["wrap!","لپیٹو","لُفّ","wickle!"],ARI:["bee","شہد کی مکھی","نحلة","Biene"]};
+const RL={"kök: konut":"root: house","çoğul eki":"plural suffix","3. kişi iyelik eki":"3rd-person possessive","kök: görme organı":"root: eye","araç/yapım eki":"noun-forming suffix (tool/thing for)"};
+const PE={isim:"noun",sıfat:"adjective",fiil:"verb"};
+const mean=w=>S.lang==="tr"?D[w][0]:G[w][LI[S.lang]];
+const qtext=w=>S.lang==="tr"?D[w][0].replace(new RegExp(w,"gi"),"____"):G[w][LI[S.lang]];
+function harmony(w){const B="AIOU",F="EİÖÜ",v=[...w].filter(c=>(B+F).includes(c));const b=v.some(c=>B.includes(c)),f=v.some(c=>F.includes(c)),en=S.lang!=="tr";
+if(v.length<2)return en?"Single syllable: no vowel harmony to check.":"Tek heceli: ünlü uyumu aranmaz.";
+if(b&&f)return en?"Major vowel harmony ✗ — back and front vowels mixed (usually a loanword/compound).":"Büyük Ünlü Uyumu ✗ — kalın ve ince ünlüler karışık.";
+return en?`Major vowel harmony ✓ — all vowels are ${b?"back (a, ı, o, u)":"front (e, i, ö, ü)"}.`:`Büyük Ünlü Uyumu ✓ — tüm ünlüler ${b?"kalın":"ince"}.`}
+const TH=[["klasik","Klasik",0],["bogaz","Boğaz Gecesi",30],["pamukkale","Pamukkale",60]];
+const S=(()=>{let s={lang:"en",lv:0,coin:0,auto:true,rate:1,theme:"klasik",book:{},day:"",streak:1};
+try{Object.assign(s,JSON.parse(localStorage.getItem("kd")||"{}"))}catch(e){}return s})();
+const save=()=>{try{localStorage.setItem("kd",JSON.stringify(S))}catch(e){}};
+const today=new Date().toISOString().slice(0,10);
+if(S.day!==today){S.day=today;S.wod=null;S.wodDone=false}
+const allW=LV.flatMap(l=>l.W);const wod=allW[Math.floor(Date.now()/864e5)%allW.length];
+let view="play",found=new Set(),bonus=new Set(),path=[],letters=[];
+const $=id=>document.getElementById(id);
+function lv(){return LV[S.lv%LV.length]}
+function newLevel(){found=new Set();bonus=new Set();letters=[...lv().L].sort(()=>Math.random()-.5);render()}
+function speak(w,r){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w.toLocaleLowerCase('tr'));u.lang="tr-TR";u.rate=r;speechSynthesis.speak(u)}catch(e){}}
+function card(w){const d=D[w];if(!d)return;const L=S.lang,en=L!=="tr";
+const dir=(L==="ar"||L==="ur")?"rtl":"ltr";
+const p=d[2]?`<div style="margin:8px 0"><b>${en?"Suffix breakdown":"Ek Ayrıştırma"}</b><br>${d[2].map(x=>`<span class="tag">${x[0]}</span><small>${en?(RL[x[1]]||x[1]):x[1]}</small>`).join(" + ")}</div>`:"";
+const big=en?`<p dir="${dir}" style="font-size:22px;font-weight:700;margin:8px 0">${mean(w)}</p><small>🇹🇷 ${d[0]}</small>`:`<p>${d[0]}</p>`;
+$("modal").innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between"><h2 style="margin:0">${d[3]||""} ${w}</h2><button class="btn o" onclick="closeM()">✕</button></div>
+<span class="tag">${en?(PE[d[1]]||d[1]):d[1]}</span>${big}${p}<br><small>${harmony(w)}</small>
+<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" onclick="speak('${w}',1)">🔊 1x</button><button class="btn o" onclick="speak('${w}',.75)">🐢 0.75x</button></div></div>`;
+$("modal").classList.add("show");if(S.auto)setTimeout(()=>speak(w,S.rate),150);
+if(!S.auto)return;clearTimeout(card.t);card.t=setTimeout(closeM,5000)}
+function closeM(){$("modal").classList.remove("show")}
+function addBook(w){if(!S.book[w])S.book[w]={box:1,due:Date.now()}}
+function submit(){const w=path.map(i=>letters[i]).join("");path=[];drawLine();
+if(w.length<2){$("cur").textContent="";return}
+const l=lv();let msg="";
+if(l.W.includes(w)&&!found.has(w)){found.add(w);S.coin+=5;addBook(w);msg="✓ Doğru! +5🪙";
+if(w===wod&&!S.wodDone){S.wodDone=true;S.coin+=20;msg="⭐ Günün Kelimesi! +20🪙"}
+if(S.auto)card(w)}
+else if(l.B.includes(w)&&!bonus.has(w)){bonus.add(w);S.coin+=2;addBook(w);msg="🫙 Bonus kelime! +2🪙";if(S.auto)card(w)}
+else if(found.has(w)||bonus.has(w))msg="Zaten buldun";
+else{$("wheel").classList.add("shake");setTimeout(()=>$("wheel").classList.remove("shake"),300);msg="Geçersiz kelime"}
+save();render(msg)}
+function drawLine(){const s=$("ln");if(!s)return;const pts=path.map(i=>{const e=document.querySelector(`.L[data-i="${i}"]`);return `${e.offsetLeft},${e.offsetTop}`});s.setAttribute("points",pts.join(" "));
+document.querySelectorAll(".L").forEach(e=>e.classList.toggle("s",path.includes(+e.dataset.i)));
+$("cur").textContent=path.map(i=>letters[i]).join("")}
+function wheelHTML(){const n=letters.length;return letters.map((c,i)=>{const a=2*Math.PI*i/n-Math.PI/2;return `<div class="L" data-i="${i}" style="left:${130+88*Math.cos(a)}px;top:${130+88*Math.sin(a)}px">${c}</div>`}).join("")}
+function render(msg=""){$("coin").textContent=S.coin;$("streak").textContent=S.streak;
+document.documentElement.dataset.t=S.theme;
+document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+const m=$("main");
+if(view==="play")playView(m,msg);else if(view==="book")bookView(m);else setView(m)}
+function playView(m,msg){const l=lv(),done=l.W.every(w=>found.has(w));
+const rows=[...l.W].sort((a,b)=>a.length-b.length).map(w=>`<div class="row">${[...w].map(c=>`<div class="c ${found.has(w)?"f":""}" ${found.has(w)?`onclick="card('${w}')"`:""}>${c}</div>`).join("")}</div>`).join("");
+m.innerHTML=`<div class="lvl">Seviye ${S.lv+1} · ${l.t} · Günün Kelimesi: ${S.wodDone?wod:"???"+" ("+wod.length+" harf)"}</div>${rows}
+<div class="msg">${msg}${bonus.size?` · Bonus: ${bonus.size}`:""}</div><div id="cur"></div>
+<div id="wheel"><svg width="260" height="260"><polyline id="ln" fill="none" stroke="var(--ac)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/></svg>${wheelHTML()}</div>
+<div style="text-align:center"><button class="btn o" onclick="letters.sort(()=>Math.random()-.5);render()">🔀 Karıştır</button> ${done?`<button class="btn" onclick="S.lv++;save();newLevel()">Sonraki ▶</button>`:""}</div>`;
+const w=$("wheel");
+const hit=e=>{const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.classList.contains("L")?+el.dataset.i:null};
+w.onpointerdown=e=>{w.setPointerCapture(e.pointerId);const i=hit(e);if(i!==null){path=[i];drawLine()}};
+w.onpointermove=e=>{if(!path.length)return;const i=hit(e);if(i===null)return;
+if(path.length>1&&path[path.length-2]===i)path.pop();else if(!path.includes(i))path.push(i);drawLine()};
+w.onpointerup=submit}
+function bookView(m){const ws=Object.keys(S.book),due=ws.filter(w=>S.book[w].due<=Date.now());
+m.innerHTML=`<h3>Kelime Defterim (${ws.length})</h3><div class="card"><b>Günlük tekrar</b>: ${due.length} kelime hazır<br><br><button class="btn" ${due.length?"":"disabled"} onclick="quiz()">▶ 2 dk'lık tekrar</button></div>
+<div id="qz"></div>${ws.map(w=>`<div class="card" onclick="card('${w}')">${D[w][3]||""} <b>${w}</b> <span class="tag">Kutu ${S.book[w].box}</span><br><small>${mean(w)}</small></div>`).join("")||"<p class='msg'>Henüz kelime yok. Oynayarak kelime topla!</p>"}`}
+function quiz(){const due=Object.keys(S.book).filter(w=>S.book[w].due<=Date.now());if(!due.length)return render();
+const w=due[0],opts=[w,...Object.keys(D).filter(x=>x!==w).sort(()=>Math.random()-.5).slice(0,2)].sort(()=>Math.random()-.5);
+$("qz").innerHTML=`<div class="card"><p><b>Hangi kelime?</b><br>${qtext(w)}</p>${opts.map(o=>`<button class="btn o" style="margin:3px" onclick="ans('${w}','${o}')">${o}</button>`).join("")}</div>`}
+function ans(w,o){const b=S.book[w],ok=w===o;b.box=ok?Math.min(5,b.box+1):1;
+b.due=Date.now()+[0,0,1,2,4,8][b.box]*864e5*(ok?1:0);if(ok)S.coin+=1;save();
+$("qz").innerHTML=`<div class="card">${ok?"✓ Doğru!":"✗ Cevap: <b>"+w+"</b>"}<br><br><button class="btn" onclick="render();quiz()">Devam</button></div>`}
+function setView(m){m.innerHTML=`<h3>Ayarlar</h3><div class="card"><div class="sw"><span>Otomatik Anlam Göster</span><input type="checkbox" ${S.auto?"checked":""} onchange="S.auto=this.checked;save()" style="width:22px;height:22px"></div>
+<div class="sw"><span>Ses hızı</span><select onchange="S.rate=+this.value;save()"><option value="1" ${S.rate==1?"selected":""}>1x</option><option value=".75" ${S.rate==.75?"selected":""}>0.75x</option></select></div><div class="sw"><span>Anlam dili / Meaning language</span><select onchange="S.lang=this.value;save()">${[["en","English"],["ur","اردو"],["ar","العربية"],["de","Deutsch"],["tr","Türkçe"]].map(x=>`<option value="${x[0]}" ${S.lang==x[0]?"selected":""}>${x[1]}</option>`).join("")}</select></div></div>
+<h3>Temalar</h3>${TH.map(t=>`<div class="card sw"><span>${t[1]}</span>${S.coin>=t[2]||S.theme===t[0]?`<button class="btn ${S.theme===t[0]?"":"o"}" onclick="S.theme='${t[0]}';save();render()">${S.theme===t[0]?"Seçili":"Seç"}</button>`:`<small>🔒 ${t[2]} 🪙 gerekli</small>`}</div>`).join("")}`}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{view=b.dataset.v;closeM();render()});
+newLevel();
+</script></body></html>
